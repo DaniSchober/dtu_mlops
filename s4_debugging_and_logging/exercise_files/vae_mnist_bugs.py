@@ -10,10 +10,13 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 from torchvision.utils import save_image
+import pdb
+
+#pdb.set_trace()
 
 # Model Hyperparameters
 dataset_path = 'datasets'
-cuda = True
+cuda = False
 DEVICE = torch.device("cuda" if cuda else "cpu")
 batch_size = 100
 x_dim  = 784
@@ -44,16 +47,17 @@ class Encoder(nn.Module):
     def forward(self, x):
         h_       = torch.relu(self.FC_input(x))
         mean     = self.FC_mean(h_)
-        log_var  = self.FC_var(h_)                     
+        log_var  = self.FC_var(h_) 
+        std      = torch.exp(0.5*log_var)                      
                                                       
-        z        = self.reparameterization(mean, log_var)
+        z        = self.reparameterization(mean, std)
         
         return z, mean, log_var
        
-    def reparameterization(self, mean, var):
-        epsilon = torch.randn(*var.shape)
+    def reparameterization(self, mean, std):
+        epsilon = torch.randn_like(std)
         
-        z = mean + var*epsilon
+        z = mean + std*epsilon
         
         return z
     
@@ -80,11 +84,7 @@ class Model(nn.Module):
         x_hat            = self.Decoder(z)
         
         return x_hat, mean, log_var
-    
-encoder = Encoder(input_dim=x_dim, hidden_dim=hidden_dim, latent_dim=latent_dim)
-decoder = Decoder(latent_dim=latent_dim, hidden_dim = hidden_dim, output_dim = x_dim)
 
-model = Model(Encoder=encoder, Decoder=decoder).to(DEVICE)
 
 from torch.optim import Adam
 
@@ -96,6 +96,13 @@ def loss_function(x, x_hat, mean, log_var):
 
     return reproduction_loss + KLD
 
+encoder = Encoder(input_dim=x_dim, hidden_dim=hidden_dim, latent_dim=latent_dim)
+decoder = Decoder(latent_dim=latent_dim, hidden_dim = hidden_dim, output_dim = x_dim)
+
+model = Model(Encoder=encoder, Decoder=decoder).to(DEVICE)
+
+
+
 optimizer = Adam(model.parameters(), lr=lr)
 
 
@@ -106,6 +113,7 @@ for epoch in range(epochs):
     for batch_idx, (x, _) in enumerate(train_loader):
         x = x.view(batch_size, x_dim)
         x = x.to(DEVICE)
+        #pdb.set_trace()
 
         x_hat, mean, log_var = model(x)
         loss = loss_function(x, x_hat, mean, log_var)
