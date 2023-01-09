@@ -1,0 +1,11 @@
+#exp 2 config
+
+dataset_path: '~/datasets'
+cuda: False
+batch_size: 120
+x_dim: 784
+hidden_dim: 600
+latent_dim: 20
+lr: 1e-3
+epochs: 4
+seed: 123
