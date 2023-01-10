@@ -124,7 +124,8 @@ for epoch in range(epochs):
         optimizer.step()
         if batch_idx % 50 == 0:
             wandb.log({"loss": loss})
-    print("\tEpoch", epoch + 1, "complete!", "\tAverage Loss: ", overall_loss / (batch_idx*batch_size))    
+    print("\tEpoch", epoch + 1, "complete!", "\tAverage Loss: ", overall_loss / (batch_idx*batch_size))
+    wandb.log({"picture": wandb.Image(x_hat.view(batch_size, 1, 28, 28))})   
 print("Finish!!")
 
 # Generate reconstructions
